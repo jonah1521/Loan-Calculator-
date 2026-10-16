@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Payment Calculator - MGIS130</title>
+
+  <!-- ========================================================= -->
+  <!-- LAYER 3: PRESENTATION LAYER (Embedded CSS Styles)          -->
+  <!-- ========================================================= -->
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f1f5f9;
+      color: #1e293b;
+      line-height: 1.6;
+    }
+
+    .container {
+      width: min(100% - 32px, 1000px);
+      margin: 40px auto;
+    }
+
+    .header {
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      color: #2563eb;
+      font-size: 0.8rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .header > p:last-child {
+      color: #64748b;
+      margin: 0;
+    }
+
+    .panel {
+      background: white;
+      padding: 28px;
+      margin-bottom: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+
+    #loan-form {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    button {
+      grid-column: 1 / -1;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .main-result {
+      background: #eff6ff;
+      padding: 22px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .main-result p {
+      margin: 0 0 4px 0;
+      color: #475569;
+    }
+
+    #monthly-payment {
+      display: block;
+      color: #1d4ed8;
+      font-size: clamp(2rem, 6vw, 2.8rem);
+      font-weight: bold;
+      overflow-wrap: anywhere;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .result-row strong {
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      color: #b91c1c;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    .disclaimer {
+      margin-top: 20px;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
+    footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-top: 32px;
+    }
+
+    @media (max-width: 700px) {
+      .container {
+        width: min(100% - 20px, 500px);
+        margin: 20px auto;
+      }
+
+      .panel {
+        padding: 20px;
+      }
+
+      #loan-form {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        grid-column: auto;
+      }
+
+      .result-row {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <header class="header">
+      <p class="eyebrow">PERSONAL FINANCE TOOL</p>
+      <h1>Loan Payment Calculator</h1>
+      <p>Calculate your estimated monthly payment, total cost, and interest.</p>
+    </header>
+
+    <!-- DATA LAYER: Form collect user input data -->
+    <section class="panel">
+      <h2>Enter Loan Details</h2>
+      <p style="color: #64748b; margin-top: -10px; margin-bottom: 20px;">Enter your loan information below.</p>
+
+      <form id="loan-form">
+        <div class="field">
+          <label for="amount">Loan Amount ($)</label>
+          <input id="amount" type="number" min="1" step="0.01" value="20000" required>
+        </div>
+
+        <div class="field">
+          <label for="rate">Annual Interest Rate (%)</label>
+          <input id="rate" type="number" min="0" max="100" step="0.01" value="6.5" required>
+        </div>
+
+        <div class="field">
+          <label for="years">Loan Term (Years)</label>
+          <input id="years" type="number" min="1" max="50" step="1" value="5" required>
+        </div>
+
+        <button type="submit">Calculate Payment</button>
+      </form>
+
+      <p id="error-message" class="error" role="alert"></p>
+      <p class="disclaimer">Estimates exclude additional fees and charges.</p>
+    </section>
+
+    <!-- PRESENTATION LAYER: Displays output values -->
+    <section class="panel results" aria-live="polite">
+      <h2>Your Results</h2>
+      <p style="color: #64748b; margin-top: -10px; margin-bottom: 20px;">Your estimated loan costs are shown below.</p>
+
+      <div class="main-result">
+        <p>Estimated Monthly Payment</p>
+        <output id="monthly-payment">$391.32</output>
+      </div>
+
+      <div class="result-row">
+        <span>Loan Amount</span>
+        <strong id="display-principal">$20,000.00</strong>
+      </div>
+
+      <div class="result-row">
+        <span>Total Amount Paid</span>
+        <strong id="total-paid">$23,479.38</strong>
+      </div>
+
+      <div class="result-row">
+        <span>Total Interest</span>
+        <strong id="total-interest">$3,479.38</strong>
+      </div>
+
+      <div class="result-row">
+        <span>Number of Payments</span>
+        <strong id="payment-count">60</strong>
+      </div>
+
+      <p class="disclaimer">
+        Educational estimate only. This is not a loan offer or financial advice.
+      </p>
+    </section>
+
+    <footer>
+      <p>MGIS130 Deliverable 2 | Loan Calculator</p>
+    </footer>
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- LAYER 2: PROCESSING LAYER (Embedded JavaScript)           -->
+  <!-- ========================================================= -->
+  <script>
+    // DOM Element References (Data Layer Access)
+    const form = document.getElementById("loan-form");
+    const amountInput = document.getElementById("amount");
+    const rateInput = document.getElementById("rate");
+    const yearsInput = document.getElementById("years");
+
+    const monthlyOutput = document.getElementById("monthly-payment");
+    const displayPrincipalOutput = document.getElementById("display-principal");
+    const totalOutput = document.getElementById("total-paid");
+    const interestOutput = document.getElementById("total-interest");
+    const countOutput = document.getElementById("payment-count");
+    const errorOutput = document.getElementById("error-message");
+
+    // Format numbers as USD currency
+    function formatMoney(value) {
+      return value.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD"
+      });
+    }
+
+    /**
+     * PROCESSING LAYER: Performs business logic and compounding calculations.
+     */
+    function calculateLoan(principal, annualRate, years) {
+      const numberOfPayments = years * 12;
+      const monthlyRate = annualRate / 100 / 12;
+
+      let monthlyPayment;
+
+      if (monthlyRate === 0) {
+        monthlyPayment = principal / numberOfPayments;
+      } else {
+        const growth = Math.pow(1 + monthlyRate, numberOfPayments);
+        monthlyPayment = (principal * (monthlyRate * growth)) / (growth - 1);
+      }
+
+      const totalPaid = monthlyPayment * numberOfPayments;
+      const totalInterest = totalPaid - principal;
+
+      return {
+        principal,
+        monthlyPayment,
+        totalPaid,
+        totalInterest,
+        numberOfPayments
+      };
+    }
+
+    /**
+     * PRESENTATION CONTROLLER: Connects Data Layer input to Processing Layer math
+     * and updates DOM elements.
+     */
+    function updateResults() {
+      const principal = Number(amountInput.value);
+      const annualRate = Number(rateInput.value);
+      const years = Number(yearsInput.value);
+
+      // Data Layer validation rules
+      if (
+        !Number.isFinite(principal) ||
+        !Number.isFinite(annualRate) ||
+        !Number.isFinite(years) ||
+        principal <= 0 ||
+        annualRate < 0 ||
+        annualRate > 100 ||
+        years < 1 ||
+        years > 50 ||
+        !Number.isInteger(years)
+      ) {
+        errorOutput.textContent =
+          "Please enter a loan amount above $0, a rate from 0 to 100%, and a whole-number term from 1 to 50 years.";
+        return;
+      }
+
+      errorOutput.textContent = "";
+
+      // Calculate results
+      const result = calculateLoan(principal, annualRate, years);
+
+      // Update UI elements
+      monthlyOutput.textContent = formatMoney(result.monthlyPayment);
+      displayPrincipalOutput.textContent = formatMoney(result.principal);
+      totalOutput.textContent = formatMoney(result.totalPaid);
+      interestOutput.textContent = format
