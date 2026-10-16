@@ -1,0 +1,108 @@
+// ==========================================
+// LAYER 1: DATA LAYER (Information Storage)
+// ==========================================
+
+// DOM Input Element References
+const form = document.getElementById("loan-form");
+const amountInput = document.getElementById("amount");
+const rateInput = document.getElementById("rate");
+const yearsInput = document.getElementById("years");
+
+// DOM Output Display References
+const monthlyOutput = document.getElementById("monthly-payment");
+const displayPrincipalOutput = document.getElementById("display-principal");
+const totalOutput = document.getElementById("total-paid");
+const interestOutput = document.getElementById("total-interest");
+const countOutput = document.getElementById("payment-count");
+const errorOutput = document.getElementById("error-message");
+
+// Helper function to format raw numbers into USD currency strings
+function formatMoney(value) {
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
+}
+
+// ==================================================
+// LAYER 2: PROCESSING LAYER (Business Logic & Math)
+// ==================================================
+
+/**
+ * Calculates standard compounding interest monthly payments and total costs.
+ * Formula: M = P * (r * (1 + r)^n) / ((1 + r)^n - 1)
+ */
+function calculateLoan(principal, annualRate, years) {
+  const numberOfPayments = years * 12;
+  const monthlyRate = annualRate / 100 / 12;
+
+  let monthlyPayment;
+
+  if (monthlyRate === 0) {
+    monthlyPayment = principal / numberOfPayments;
+  } else {
+    const growth = Math.pow(1 + monthlyRate, numberOfPayments);
+    monthlyPayment = (principal * (monthlyRate * growth)) / (growth - 1);
+  }
+
+  const totalPaid = monthlyPayment * numberOfPayments;
+  const totalInterest = totalPaid - principal;
+
+  return {
+    principal,
+    monthlyPayment,
+    totalPaid,
+    totalInterest,
+    numberOfPayments
+  };
+}
+
+// =========================================================
+// LAYER 3: PRESENTATION LAYER (Interface & Event Controller)
+// =========================================================
+
+function updateResults() {
+  // Extract and parse numeric values from Data Layer inputs
+  const principal = Number(amountInput.value);
+  const annualRate = Number(rateInput.value);
+  const years = Number(yearsInput.value);
+
+  // Business Logic Validation Constraints
+  if (
+    !Number.isFinite(principal) ||
+    !Number.isFinite(annualRate) ||
+    !Number.isFinite(years) ||
+    principal <= 0 ||
+    annualRate < 0 ||
+    annualRate > 100 ||
+    years < 1 ||
+    years > 50 ||
+    !Number.isInteger(years)
+  ) {
+    errorOutput.textContent =
+      "Please enter a loan amount above $0, a rate from 0 to 100%, and a whole-number term from 1 to 50 years.";
+    return;
+  }
+
+  // Clear previous validation error messages
+  errorOutput.textContent = "";
+
+  // Trigger Processing Layer logic
+  const result = calculateLoan(principal, annualRate, years);
+
+  // Update User Interface (Presentation Layer) with dynamic calculated values
+  monthlyOutput.textContent = formatMoney(result.monthlyPayment);
+  displayPrincipalOutput.textContent = formatMoney(result.principal);
+  totalOutput.textContent = formatMoney(result.totalPaid);
+  interestOutput.textContent = formatMoney(result.totalInterest);
+  countOutput.textContent = result.numberOfPayments.toLocaleString("en-US");
+}
+
+// Event Listeners for UI interaction
+form.addEventListener("submit", function (event) {
+  event.preventDefault();
+  updateResults();
+});
+
+// Auto-calculate on initial load
+updateResults();
